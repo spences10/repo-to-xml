@@ -1,4 +1,4 @@
-import { ProcessingResult, FileEntry, GitFileInfo } from "../types/mod.ts";
+import { FileEntry, GitFileInfo, ProcessingResult } from "../types/mod.ts";
 
 /**
  * Escape special XML characters in a string

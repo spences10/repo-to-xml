@@ -1,4 +1,4 @@
-import { join, relative } from "@std/path";
+import { join } from "@std/path";
 import { RepoConfig } from "../types/mod.ts";
 
 /**

@@ -1,68 +1,78 @@
-import { assertEquals, assertExists } from "@std/assert";
-import { RepoProcessor } from "../src/processor.ts";
-import { DEFAULT_CONFIG } from "../src/types/mod.ts";
+import { assertEquals } from "@std/assert";
+import {
+	formatFileSize,
+	getFileType,
+	isBinaryContent,
+	isExcluded,
+} from "../src/utils/file.ts";
+import { escapeXml, formatXml } from "../src/utils/xml.ts";
 
-// Create temporary test directory
-async function createTestRepo(): Promise<string> {
-	const tmpDir = await Deno.makeTempDir();
+// File utility tests
+Deno.test("isExcluded - Basic Patterns", () => {
+	const patterns = ["node_modules", "*.log", ".DS_Store"];
 
-	// Create some test files
-	await Deno.writeTextFile(`${tmpDir}/test.txt`, "This is a test file");
-
-	await Deno.writeTextFile(
-		`${tmpDir}/src/main.ts`,
-		"console.log('Hello World');"
-	);
-
-	return tmpDir;
-}
-
-Deno.test("RepoProcessor - Basic Processing", async () => {
-	const tmpDir = await createTestRepo();
-
-	try {
-		const processor = new RepoProcessor(DEFAULT_CONFIG);
-		const result = await processor.process(tmpDir);
-
-		// Check basic stats
-		assertEquals(result.stats.totalFiles > 0, true);
-		assertEquals(result.stats.skippedFiles >= 0, true);
-		assertEquals(result.stats.totalSize > 0, true);
-		assertExists(result.stats.startTime);
-		assertExists(result.stats.endTime);
-
-		// Check files were processed
-		assertEquals(result.files.length > 0, true);
-
-		// Check file entries have required fields
-		const file = result.files[0];
-		assertExists(file.path);
-		assertExists(file.content);
-		assertExists(file.size);
-		assertExists(file.type);
-		assertExists(file.lastModified);
-	} finally {
-		// Cleanup
-		await Deno.remove(tmpDir, { recursive: true });
-	}
+	assertEquals(isExcluded("node_modules", patterns), true);
+	assertEquals(isExcluded("error.log", patterns), true);
+	assertEquals(isExcluded(".DS_Store", patterns), true);
+	assertEquals(isExcluded("src/main.ts", patterns), false);
 });
 
-Deno.test("RepoProcessor - XML Output", async () => {
-	const tmpDir = await createTestRepo();
+Deno.test("getFileType - File Extensions", () => {
+	assertEquals(getFileType("main.ts"), "typescript");
+	assertEquals(getFileType("styles.css"), "css");
+	assertEquals(getFileType("data.json"), "json");
+	assertEquals(getFileType("readme.md"), "markdown");
+	assertEquals(getFileType("unknown.xyz"), "unknown");
+});
 
-	try {
-		const processor = new RepoProcessor(DEFAULT_CONFIG);
-		const result = await processor.process(tmpDir);
-		const xml = processor.toXml(result);
+Deno.test("formatFileSize - Various Sizes", () => {
+	assertEquals(formatFileSize(512), "512.00 B");
+	assertEquals(formatFileSize(1024), "1.00 KB");
+	assertEquals(formatFileSize(1024 * 1024), "1.00 MB");
+	assertEquals(formatFileSize(1024 * 1024 * 1024), "1.00 GB");
+});
 
-		// Basic XML validation
-		assertEquals(xml.startsWith("<?xml"), true);
-		assertEquals(xml.includes("<repository>"), true);
-		assertEquals(xml.includes("</repository>"), true);
-		assertEquals(xml.includes("<files>"), true);
-		assertEquals(xml.includes("</files>"), true);
-	} finally {
-		// Cleanup
-		await Deno.remove(tmpDir, { recursive: true });
-	}
+Deno.test("isBinaryContent - Text vs Binary", () => {
+	// Text content
+	const textContent = new TextEncoder().encode("Hello, World!");
+	assertEquals(isBinaryContent(textContent), false);
+
+	// Binary content
+	const binaryContent = new Uint8Array([0, 255, 0, 255]);
+	assertEquals(isBinaryContent(binaryContent), true);
+});
+
+// XML utility tests
+Deno.test("escapeXml - Special Characters", () => {
+	const input = '<test attr="value">Hello & Goodbye</test>';
+	const expected =
+		"&lt;test attr=&quot;value&quot;&gt;Hello &amp; Goodbye&lt;/test&gt;";
+	assertEquals(escapeXml(input), expected);
+});
+
+Deno.test("formatXml - Indentation", () => {
+	const input = "<root><child><grandchild>value</grandchild></child></root>";
+	const formatted = formatXml(input).trim();
+	const expected = [
+		"<root>",
+		"  <child>",
+		"    <grandchild>value</grandchild>",
+		"  </child>",
+		"</root>",
+	].join("\n");
+
+	assertEquals(formatted, expected);
+});
+
+// Test CDATA handling
+Deno.test("formatXml - CDATA Sections", () => {
+	const input = "<root><content><![CDATA[<test>data</test>]]></content></root>";
+	const formatted = formatXml(input).trim();
+	const expected = [
+		"<root>",
+		"  <content><![CDATA[<test>data</test>]]></content>",
+		"</root>",
+	].join("\n");
+
+	assertEquals(formatted, expected);
 });

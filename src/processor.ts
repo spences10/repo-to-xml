@@ -1,12 +1,12 @@
 import { join, relative } from "@std/path";
 import {
-	RepoConfig,
+	FileEntry,
 	ProcessingResult,
 	ProcessingStats,
-	FileEntry,
+	RepoConfig,
 } from "./types/mod.ts";
-import { walkFiles, getFileType, isBinaryFile } from "./utils/file.ts";
-import { resultsToXml, formatXml } from "./utils/xml.ts";
+import { getFileType, isBinaryFile, walkFiles } from "./utils/file.ts";
+import { formatXml, resultsToXml } from "./utils/xml.ts";
 
 export class RepoProcessor {
 	private config: RepoConfig;

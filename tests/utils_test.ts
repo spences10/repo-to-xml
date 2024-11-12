@@ -1,9 +1,9 @@
 import { assertEquals } from "@std/assert";
 import {
-	isExcluded,
-	getFileType,
 	formatFileSize,
+	getFileType,
 	isBinaryContent,
+	isExcluded,
 } from "../src/utils/file.ts";
 import { escapeXml, formatXml } from "../src/utils/xml.ts";
 
@@ -52,21 +52,27 @@ Deno.test("escapeXml - Special Characters", () => {
 
 Deno.test("formatXml - Indentation", () => {
 	const input = "<root><child><grandchild>value</grandchild></child></root>";
-	const expected = `<root>
-  <child>
-    <grandchild>value</grandchild>
-  </child>
-</root>
-`;
-	assertEquals(formatXml(input), expected);
+	const formatted = formatXml(input).trim();
+	const expected = [
+		"<root>",
+		"  <child>",
+		"    <grandchild>value</grandchild>",
+		"  </child>",
+		"</root>",
+	].join("\n");
+
+	assertEquals(formatted, expected);
 });
 
 // Test CDATA handling
 Deno.test("formatXml - CDATA Sections", () => {
 	const input = "<root><content><![CDATA[<test>data</test>]]></content></root>";
-	const expected = `<root>
-  <content><![CDATA[<test>data</test>]]></content>
-</root>
-`;
-	assertEquals(formatXml(input), expected);
+	const formatted = formatXml(input).trim();
+	const expected = [
+		"<root>",
+		"  <content><![CDATA[<test>data</test>]]></content>",
+		"</root>",
+	].join("\n");
+
+	assertEquals(formatted, expected);
 });

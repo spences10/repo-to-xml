@@ -2,7 +2,7 @@
   "tasks": {
     "dev": "deno run --watch --allow-read --allow-write main.ts",
     "start": "deno run --allow-read --allow-write main.ts",
-    "test": "deno test --allow-read",
+    "test": "deno test --allow-read --allow-write",
     "compile": "deno compile --allow-read --allow-write -o repo-to-xml main.ts"
   },
   "imports": {
