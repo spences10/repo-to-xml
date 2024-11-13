@@ -235,28 +235,30 @@ export function formatFileSize(bytes: number): string {
 /**
  * Check if a file should be processed based on config
  */
+export const should_include_file = (
+	path: string,
+	patterns: string[]
+): boolean => {
+	const ext = path.split(".").pop()?.toLowerCase() || "";
+	return patterns.some((pattern) => {
+		const patternExt = pattern.replace("*.", "");
+		return ext === patternExt;
+	});
+};
+
 export async function shouldProcessFile(
 	path: string,
 	config: RepoConfig
 ): Promise<boolean> {
-	// Check file patterns
-	if (isExcluded(path, config.excludeFiles)) {
+	// Check if file matches include patterns
+	if (!should_include_file(path, config.includeFiles)) {
 		return false;
 	}
 
 	// Check size
 	try {
 		const stat = await Deno.stat(path);
-		if (stat.size < config.minFileSize || stat.size > config.maxFileSize) {
-			return false;
-		}
-
-		// Check if binary
-		if (!config.includeBinaryFiles && (await isBinaryFile(path))) {
-			return false;
-		}
-
-		return true;
+		return stat.size >= config.minFileSize && stat.size <= config.maxFileSize;
 	} catch {
 		return false;
 	}
@@ -282,4 +284,95 @@ export async function* walkFiles(
 			}
 		}
 	}
+}
+
+/**
+ * Scan directory for unique file extensions
+ */
+export async function scan_project_extensions(
+	dir: string
+): Promise<Set<string>> {
+	const extensions = new Set<string>();
+
+	async function scan(path: string) {
+		for await (const entry of Deno.readDir(path)) {
+			const fullPath = join(path, entry.name);
+
+			if (entry.isDirectory) {
+				// Skip common exclude dirs
+				if (
+					!["node_modules", ".git", "dist", "build", ".svelte-kit"].includes(
+						entry.name
+					)
+				) {
+					await scan(fullPath);
+				}
+			} else if (entry.isFile) {
+				const ext = entry.name.split(".").pop()?.toLowerCase();
+				if (ext) extensions.add(ext);
+			}
+		}
+	}
+
+	await scan(dir);
+	return extensions;
+}
+
+/**
+ * Format extensions list for display
+ */
+export function format_extensions(extensions: Set<string>): string {
+	const groups: Record<string, string[]> = {
+		Programming: [
+			"ts",
+			"js",
+			"py",
+			"java",
+			"cpp",
+			"rs",
+			"go",
+			"rb",
+			"php",
+			"svelte",
+			"vue",
+			"jsx",
+			"tsx",
+		],
+		Web: ["html", "css", "scss", "less", "json", "xml"],
+		Documentation: ["md", "txt", "rst", "doc", "pdf"],
+		Config: ["yml", "yaml", "toml", "ini", "env"],
+		Other: [],
+	};
+
+	const grouped: Record<string, string[]> = {};
+	const found = new Set<string>();
+
+	// Group known extensions
+	for (const [group, exts] of Object.entries(groups)) {
+		grouped[group] = [];
+		for (const ext of exts) {
+			if (extensions.has(ext)) {
+				grouped[group].push(ext);
+				found.add(ext);
+			}
+		}
+	}
+
+	// Add remaining extensions to Other
+	for (const ext of extensions) {
+		if (!found.has(ext)) {
+			grouped["Other"].push(ext);
+		}
+	}
+
+	// Format output
+	const lines: string[] = ["Available file extensions:"];
+	for (const [group, exts] of Object.entries(grouped)) {
+		if (exts.length > 0) {
+			lines.push(`\n${group}:`);
+			lines.push(`  ${exts.sort().join(", ")}`);
+		}
+	}
+
+	return lines.join("\n");
 }

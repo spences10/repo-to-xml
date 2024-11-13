@@ -5,7 +5,8 @@ import {
 	ProcessingStats,
 	RepoConfig,
 } from "./types/mod.ts";
-import { getFileType, isBinaryFile, walkFiles } from "./utils/file.ts";
+import { compress_content } from "./utils/compression.ts";
+import { getFileType, walkFiles } from "./utils/file.ts";
 import { formatXml, resultsToXml } from "./utils/xml.ts";
 
 export class RepoProcessor {
@@ -28,11 +29,6 @@ export class RepoProcessor {
 	async process(repoPath: string): Promise<ProcessingResult> {
 		const files: FileEntry[] = [];
 		let gitInfo = undefined;
-
-		// Get Git repository info if enabled
-		if (this.config.includeGitInfo) {
-			gitInfo = await this.getGitInfo(repoPath);
-		}
 
 		// Process all files
 		for await (const filePath of walkFiles(repoPath, this.config)) {
@@ -82,22 +78,26 @@ export class RepoProcessor {
 				return null;
 			}
 
-			// Check if file is binary
+			// Get file content
 			const fileContent = await Deno.readFile(filePath);
-			if (
-				!this.config.includeBinaryFiles &&
-				(await isBinaryFile(filePath, fileContent))
-			) {
-				return null;
-			}
-
-			// Get file content as string
 			const content = new TextDecoder().decode(fileContent);
+			let processedContent = content;
+			let compressed = false;
+
+			// Compress content if enabled and above threshold
+			if (
+				this.config.compressContent &&
+				content.length > this.config.compressionThreshold
+			) {
+				processedContent = await compress_content(content);
+				compressed = true;
+			}
 
 			// Build file entry
 			const entry: FileEntry = {
 				path: relativePath,
-				content,
+				content: processedContent,
+				compressed,
 				size: stat.size,
 				type: getFileType(relativePath),
 				lastModified: stat.mtime || new Date(),

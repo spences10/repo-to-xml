@@ -1,0 +1,10 @@
+# Project specific
+*.config.json
+*.xml
+
+# But keep the example
+!example.config.json
+
+# Deno
+.env
+.env.*

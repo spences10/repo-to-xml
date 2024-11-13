@@ -1,23 +1,27 @@
 export interface RepoConfig {
 	/** Directories to exclude from processing */
 	excludeDirs: string[];
-	/** File patterns to exclude (supports glob patterns) */
-	excludeFiles: string[];
+	/** File patterns to include (supports glob patterns) */
+	includeFiles: string[];
 	/** Maximum file size in bytes */
 	maxFileSize: number;
 	/** Minimum file size in bytes */
 	minFileSize: number;
 	/** Whether to include git metadata */
 	includeGitInfo: boolean;
-	/** Whether to include binary files */
-	includeBinaryFiles: boolean;
+	/** Whether to compress file contents */
+	compressContent: boolean;
+	/** Maximum content length before compression (bytes) */
+	compressionThreshold: number;
 }
 
 export interface FileEntry {
 	/** Relative path from repository root */
 	path: string;
-	/** File content */
+	/** File content - base64 encoded if binary */
 	content: string;
+	/** Whether content is compressed */
+	compressed?: boolean;
 	/** File size in bytes */
 	size: number;
 	/** Detected file type */
@@ -75,6 +79,10 @@ export interface CliOptions {
 	output: string;
 	/** Configuration file path */
 	config?: string;
+	/** File extensions to include */
+	extensions?: string[];
+	/** Show available extensions */
+	listExtensions?: boolean;
 	/** Verbosity level */
 	verbose: boolean;
 }
@@ -88,25 +96,14 @@ export const DEFAULT_CONFIG: RepoConfig = {
 		"build",
 		".next",
 		".cache",
+		".svelte-kit",
+		"coverage",
+		".turbo",
 	],
-	excludeFiles: [
-		".DS_Store",
-		"Thumbs.db",
-		"*.lock",
-		"*.log",
-		"*.map",
-		"*.png",
-		"*.jpg",
-		"*.jpeg",
-		"*.gif",
-		"*.ico",
-		"*.woff",
-		"*.woff2",
-		"*.ttf",
-		"*.eot",
-	],
-	maxFileSize: 1024 * 1024, // 1MB
+	includeFiles: ["*.ts", "*.svelte"],
+	maxFileSize: 512 * 1024, // 512KB
 	minFileSize: 0,
-	includeGitInfo: true,
-	includeBinaryFiles: false,
+	includeGitInfo: false,
+	compressContent: true,
+	compressionThreshold: 1024, // Compress files larger than 1KB
 };

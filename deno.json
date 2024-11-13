@@ -8,6 +8,7 @@
   "imports": {
     "@std/assert": "jsr:@std/assert@^1",
     "@std/path": "jsr:@std/path@^1",
-    "@std/fs": "jsr:@std/fs@^1"
+    "@std/fs": "jsr:@std/fs@^1",
+    "compress": "https://deno.land/x/compress@v0.4.5/mod.ts"
   }
 }

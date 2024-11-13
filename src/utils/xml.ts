@@ -16,7 +16,18 @@ export function escapeXml(str: string): string {
  * Convert a date to ISO string safely
  */
 function formatDate(date: Date | undefined): string {
-	return date ? date.toISOString() : "";
+	if (!date) return "";
+
+	// Check if date is valid
+	const timestamp = date.getTime();
+	if (isNaN(timestamp)) return "";
+
+	try {
+		return date.toISOString();
+	} catch (error) {
+		console.warn("Invalid date encountered:", date);
+		return "";
+	}
 }
 
 /**
@@ -36,13 +47,15 @@ function gitInfoToXml(info: GitFileInfo | undefined, indent: string): string {
 		info.lastAuthor
 			? `${indent}  <last_author>${escapeXml(info.lastAuthor)}</last_author>`
 			: "",
-		info.lastCommitDate
-			? `${indent}  <last_commit_date>${formatDate(
-					info.lastCommitDate
-			  )}</last_commit_date>`
-			: "",
-		`${indent}</git_info>`,
 	];
+
+	// Add last commit date if valid
+	const commitDate = formatDate(info.lastCommitDate);
+	if (commitDate) {
+		parts.push(`${indent}  <last_commit_date>${commitDate}</last_commit_date>`);
+	}
+
+	parts.push(`${indent}</git_info>`);
 
 	return parts.filter(Boolean).join("\n");
 }
@@ -56,22 +69,20 @@ function fileEntryToXml(file: FileEntry, indent: string): string {
 		`${indent}  <path>${escapeXml(file.path)}</path>`,
 		`${indent}  <type>${escapeXml(file.type)}</type>`,
 		`${indent}  <size>${file.size}</size>`,
-		`${indent}  <last_modified>${formatDate(
-			file.lastModified
-		)}</last_modified>`,
 	];
 
-	// Add git info if available
-	const gitInfo = gitInfoToXml(file.gitInfo, indent + "  ");
-	if (gitInfo) {
-		parts.push(gitInfo);
+	if (file.compressed) {
+		parts.push(`${indent}  <compressed>true</compressed>`);
 	}
 
-	// Add content
+	// Add content with compression flag
 	parts.push(
-		`${indent}  <content><![CDATA[${file.content}]]></content>`,
-		`${indent}</file>`
+		`${indent}  <content${file.compressed ? ' compressed="true"' : ''}><![CDATA[${
+			file.content
+		}]]></content>`,
 	);
+
+	parts.push(`${indent}</file>`);
 
 	return parts.join("\n");
 }
@@ -82,48 +93,21 @@ function fileEntryToXml(file: FileEntry, indent: string): string {
 export function resultsToXml(results: ProcessingResult): string {
 	const parts = [
 		'<?xml version="1.0" encoding="UTF-8"?>',
-		"<repository>",
-		"  <stats>",
+		'<repository>',
+		'  <stats>',
 		`    <total_files>${results.stats.totalFiles}</total_files>`,
 		`    <total_size>${results.stats.totalSize}</total_size>`,
 		`    <skipped_files>${results.stats.skippedFiles}</skipped_files>`,
-		`    <start_time>${formatDate(results.stats.startTime)}</start_time>`,
+		'  </stats>',
+		'  <files>',
 	];
 
-	if (results.stats.endTime) {
-		parts.push(`    <end_time>${formatDate(results.stats.endTime)}</end_time>`);
-	}
-
-	parts.push("  </stats>");
-
-	// Add git repository info if available
-	if (results.gitInfo) {
-		parts.push("  <repository_info>");
-		if (results.gitInfo.remoteUrl) {
-			parts.push(
-				`    <remote_url>${escapeXml(results.gitInfo.remoteUrl)}</remote_url>`
-			);
-		}
-		if (results.gitInfo.branch) {
-			parts.push(`    <branch>${escapeXml(results.gitInfo.branch)}</branch>`);
-		}
-		if (results.gitInfo.lastCommit) {
-			parts.push(
-				`    <last_commit>${escapeXml(
-					results.gitInfo.lastCommit
-				)}</last_commit>`
-			);
-		}
-		parts.push("  </repository_info>");
-	}
-
 	// Add files
-	parts.push("  <files>");
 	for (const file of results.files) {
 		parts.push(fileEntryToXml(file, "    "));
 	}
-	parts.push("  </files>");
 
+	parts.push("  </files>");
 	parts.push("</repository>");
 
 	return parts.join("\n");
