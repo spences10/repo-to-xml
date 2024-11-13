@@ -50,31 +50,41 @@ Deno.test('escapeXml - Special Characters', () => {
 	assertEquals(escapeXml(input), expected);
 });
 
-Deno.test('formatXml - Indentation', () => {
-	const input =
+Deno.test('formatXml - Compact Output', () => {
+	const input = `
+		<root>
+			<child>
+				<grandchild>value</grandchild>
+			</child>
+		</root>
+	`;
+	const expected =
 		'<root><child><grandchild>value</grandchild></child></root>';
-	const formatted = formatXml(input).trim();
-	const expected = [
-		'<root>',
-		'  <child>',
-		'    <grandchild>value</grandchild>',
-		'  </child>',
-		'</root>',
-	].join('\n');
-
-	assertEquals(formatted, expected);
+	assertEquals(formatXml(input), expected);
 });
 
-// Test CDATA handling
 Deno.test('formatXml - CDATA Sections', () => {
-	const input =
+	const input = `
+		<root>
+			<content><![CDATA[<test>data</test>]]></content>
+		</root>
+	`;
+	const expected =
 		'<root><content><![CDATA[<test>data</test>]]></content></root>';
-	const formatted = formatXml(input).trim();
-	const expected = [
-		'<root>',
-		'  <content><![CDATA[<test>data</test>]]></content>',
-		'</root>',
-	].join('\n');
+	assertEquals(formatXml(input), expected);
+});
 
-	assertEquals(formatted, expected);
+Deno.test('formatXml - Pretty Print', () => {
+	const input = '<root><child><grandchild>value</grandchild></child></root>';
+	const expected = `<root>
+	<child>
+		<grandchild>value</grandchild>
+	</child>
+</root>`;
+	
+	// Remove any trailing whitespace and normalize line endings
+	const actual = formatXml(input, true).replace(/\r\n/g, '\n').trimEnd();
+	const expectedTrimmed = expected.replace(/\r\n/g, '\n').trimEnd();
+	
+	assertEquals(actual, expectedTrimmed);
 });

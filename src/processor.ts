@@ -215,6 +215,6 @@ export class RepoProcessor {
 	 * Convert processing results to formatted XML
 	 */
 	toXml(results: ProcessingResult): string {
-		return formatXml(resultsToXml(results));
+		return formatXml(resultsToXml(results), true);
 	}
 }
