@@ -1,8 +1,4 @@
-import {
-	FileEntry,
-	GitFileInfo,
-	ProcessingResult,
-} from '../types/mod.ts';
+import { ProcessingResult } from '../types/mod.ts';
 
 /**
  * Escape special XML characters in a string
@@ -17,152 +13,76 @@ export function escapeXml(str: string): string {
 }
 
 /**
- * Convert a date to ISO string safely
- */
-function formatDate(date: Date | undefined): string {
-	if (!date) return '';
-
-	// Check if date is valid
-	const timestamp = date.getTime();
-	if (isNaN(timestamp)) return '';
-
-	try {
-		return date.toISOString();
-	} catch (error) {
-		console.warn('Invalid date encountered:', date);
-		return '';
-	}
-}
-
-/**
- * Generate XML for git file info
- */
-function gitInfoToXml(
-	info: GitFileInfo | undefined,
-	indent: string
-): string {
-	if (!info) return '';
-
-	const parts = [
-		`${indent}<git_info>`,
-		info.lastCommit
-			? `${indent}  <last_commit>${escapeXml(
-					info.lastCommit
-			  )}</last_commit>`
-			: '',
-		info.lastMessage
-			? `${indent}  <last_message>${escapeXml(
-					info.lastMessage
-			  )}</last_message>`
-			: '',
-		info.lastAuthor
-			? `${indent}  <last_author>${escapeXml(
-					info.lastAuthor
-			  )}</last_author>`
-			: '',
-	];
-
-	// Add last commit date if valid
-	const commitDate = formatDate(info.lastCommitDate);
-	if (commitDate) {
-		parts.push(
-			`${indent}  <last_commit_date>${commitDate}</last_commit_date>`
-		);
-	}
-
-	parts.push(`${indent}</git_info>`);
-
-	return parts.filter(Boolean).join('\n');
-}
-
-/**
- * Generate XML for a single file entry
- */
-function fileEntryToXml(file: FileEntry, indent: string): string {
-	const parts = [
-		`${indent}<file>`,
-		`${indent}  <path>${escapeXml(file.path)}</path>`,
-		`${indent}  <type>${escapeXml(file.type)}</type>`,
-		`${indent}  <size>${file.size}</size>`,
-	];
-
-	if (file.compressed) {
-		parts.push(`${indent}  <compressed>true</compressed>`);
-	}
-
-	// Add content with compression flag
-	parts.push(
-		`${indent}  <content${
-			file.compressed ? ' compressed="true"' : ''
-		}><![CDATA[${file.content}]]></content>`
-	);
-
-	parts.push(`${indent}</file>`);
-
-	return parts.join('\n');
-}
-
-/**
  * Convert processing results to XML string
  */
 export function resultsToXml(results: ProcessingResult): string {
-	const parts = [
+	return [
 		'<?xml version="1.0" encoding="UTF-8"?>',
 		'<repository>',
-		'  <stats>',
-		`    <total_files>${results.stats.totalFiles}</total_files>`,
-		`    <total_size>${results.stats.totalSize}</total_size>`,
-		`    <skipped_files>${results.stats.skippedFiles}</skipped_files>`,
-		'  </stats>',
-		'  <files>',
-	];
-
-	// Add files
-	for (const file of results.files) {
-		parts.push(fileEntryToXml(file, '    '));
-	}
-
-	parts.push('  </files>');
-	parts.push('</repository>');
-
-	return parts.join('\n');
+		'<stats>',
+		`<total_files>${results.stats.totalFiles}</total_files>`,
+		`<total_size>${results.stats.totalSize}</total_size>`,
+		`<skipped_files>${results.stats.skippedFiles}</skipped_files>`,
+		'</stats>',
+		'<files>',
+		...results.files.map((file) =>
+			[
+				'<file>',
+				`<path>${escapeXml(file.path.trim())}</path>`,
+				`<type>${escapeXml(file.type.trim())}</type>`,
+				`<size>${file.size}</size>`,
+				file.compressed ? '<compressed>true</compressed>' : '',
+				`<content${
+					file.compressed ? ' compressed="true"' : ''
+				}><![CDATA[${file.content.trim()}]]></content>`,
+				'</file>',
+			]
+				.filter(Boolean)
+				.join('')
+		),
+		'</files>',
+		'</repository>',
+	].join('');
 }
 
 /**
  * Format XML string with proper indentation
  */
 export function formatXml(xml: string, pretty = false): string {
-	if (!pretty) {
-		// Return compact XML for tests
-		return xml.replace(/\s+/g, '');
-	}
+	if (!pretty) return xml;
 
 	let formatted = '';
 	let indent = 0;
-	const lines = xml.trim().split('\n');
 
-	for (const line of lines) {
-		const trimmed = line.trim();
-		if (!trimmed) continue;
+	// Split on tag boundaries but keep delimiters
+	const tokens = xml.split(/(<!\[CDATA\[.*?\]\]>|<[^>]+>)/s);
 
-		// Decrease indent for closing tags
-		if (trimmed.startsWith('</')) {
-			indent--;
+	for (const token of tokens) {
+		if (!token.trim()) continue;
+
+		// Skip indentation for CDATA sections
+		if (token.startsWith('<![CDATA[')) {
+			formatted += token;
+			continue;
 		}
 
-		// Add line with proper indentation
-		formatted += '  '.repeat(indent) + trimmed + '\n';
+		// Decrease indent for closing tags
+		if (token.startsWith('</')) {
+			indent = Math.max(0, indent - 1);
+		}
+
+		// Add line and indent for non-empty tokens
+		formatted += '\n' + '  '.repeat(indent) + token.trim();
 
 		// Increase indent for opening tags (if not self-closing)
 		if (
-			trimmed.startsWith('<') &&
-			!trimmed.startsWith('</') &&
-			!trimmed.endsWith('/>') &&
-			!trimmed.endsWith(']]>')
+			token.startsWith('<') &&
+			!token.startsWith('</') &&
+			!token.endsWith('/>')
 		) {
 			indent++;
 		}
 	}
 
-	return formatted;
+	return formatted.trim();
 }

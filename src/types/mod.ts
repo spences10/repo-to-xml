@@ -1,6 +1,8 @@
 export interface RepoConfig {
 	/** Directories to exclude from processing */
 	excludeDirs: string[];
+	/** Files to exclude from processing */
+	excludeFiles: string[];
 	/** File patterns to include (supports glob patterns) */
 	includeFiles: string[];
 	/** Maximum file size in bytes */
@@ -28,19 +30,6 @@ export interface FileEntry {
 	type: string;
 	/** Last modified timestamp */
 	lastModified: Date;
-	/** Git status if available */
-	gitInfo?: GitFileInfo;
-}
-
-export interface GitFileInfo {
-	/** Last commit hash that modified this file */
-	lastCommit?: string;
-	/** Last commit message */
-	lastMessage?: string;
-	/** Last commit author */
-	lastAuthor?: string;
-	/** Last commit date */
-	lastCommitDate?: Date;
 }
 
 export interface ProcessingStats {
@@ -61,15 +50,6 @@ export interface ProcessingResult {
 	files: FileEntry[];
 	/** Processing statistics */
 	stats: ProcessingStats;
-	/** Git repository info if available */
-	gitInfo?: {
-		/** Remote URL */
-		remoteUrl?: string;
-		/** Current branch */
-		branch?: string;
-		/** Last commit hash */
-		lastCommit?: string;
-	};
 }
 
 export interface CliOptions {
@@ -99,6 +79,16 @@ export const DEFAULT_CONFIG: RepoConfig = {
 		'.svelte-kit',
 		'coverage',
 		'.turbo',
+	],
+	excludeFiles: [
+		'pnpm-lock.yaml',
+		'package-lock.json',
+		'yarn.lock',
+		'.DS_Store',
+		'Thumbs.db',
+		'.env',
+		'.env.*',
+		'*.log',
 	],
 	includeFiles: ['*.ts', '*.svelte'],
 	maxFileSize: 512 * 1024, // 512KB
