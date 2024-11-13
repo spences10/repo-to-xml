@@ -1,43 +1,45 @@
-import { exists } from "@std/fs";
-import { parseArgs } from "https://deno.land/std@0.220.1/cli/parse_args.ts";
+import { exists } from '@std/fs';
+import { parseArgs } from 'https://deno.land/std@0.220.1/cli/parse_args.ts';
 import {
 	bold,
 	green,
 	red,
 	yellow,
-} from "https://deno.land/std@0.220.1/fmt/colors.ts";
-import { RepoProcessor } from "./src/processor.ts";
-import { DEFAULT_CONFIG, RepoConfig } from "./src/types/mod.ts";
-import { generate_config } from "./src/utils/config.ts";
+} from 'https://deno.land/std@0.220.1/fmt/colors.ts';
+import { RepoProcessor } from './src/processor.ts';
+import { DEFAULT_CONFIG, RepoConfig } from './src/types/mod.ts';
+import { generate_config } from './src/utils/config.ts';
 import {
 	format_extensions,
 	scan_project_extensions,
-} from "./src/utils/file.ts";
+} from './src/utils/file.ts';
 
 const BANNER = bold(`
 ┌─────────────────────────────┐
-│     ${green("repo-to-xml")} v1.0.0      │
+│     ${green('repo-to-xml')} v1.0.0      │
 │  Git Repository → XML Tool  │
 └─────────────────────────────┘
 `);
 
 function print_step(message: string) {
-	console.log(`\n${bold("→")} ${message}`);
+	console.log(`\n${bold('→')} ${message}`);
 }
 
 function print_success(message: string) {
-	console.log(`${green("✓")} ${message}`);
+	console.log(`${green('✓')} ${message}`);
 }
 
 function print_warning(message: string) {
-	console.log(`${yellow("!")} ${message}`);
+	console.log(`${yellow('!')} ${message}`);
 }
 
 function print_error(message: string) {
-	console.error(`${red("✗")} ${message}`);
+	console.error(`${red('✗')} ${message}`);
 }
 
-async function loadConfig(configPath: string): Promise<Partial<RepoConfig>> {
+async function loadConfig(
+	configPath: string
+): Promise<Partial<RepoConfig>> {
 	try {
 		const content = await Deno.readTextFile(configPath);
 		return JSON.parse(content);
@@ -61,7 +63,7 @@ async function validatePath(path: string): Promise<void> {
 	try {
 		const stat = await Deno.stat(path);
 		if (!stat.isDirectory) {
-			print_error("Path must be a directory");
+			print_error('Path must be a directory');
 			Deno.exit(1);
 		}
 	} catch (error: unknown) {
@@ -78,40 +80,40 @@ async function validatePath(path: string): Promise<void> {
 function showHelp(): void {
 	console.log(BANNER);
 	console.log(`
-${bold("Usage:")}
+${bold('Usage:')}
   repo-to-xml <repository-path> [options]
 
-${bold("Options:")}
+${bold('Options:')}
   ${green(
-		"-o, --output"
+		'-o, --output'
 	)} <file>        Output XML file (default: <project-name>.xml)
   ${green(
-		"-i, --include"
+		'-i, --include'
 	)} <extensions>  File extensions to include (comma-separated)
   ${green(
-		"-l, --list-extensions"
+		'-l, --list-extensions'
 	)}      List available file extensions in the project
-  ${green("-c, --config")} <file>        Custom configuration file
+  ${green('-c, --config')} <file>        Custom configuration file
   ${green(
-		"-g, --generate-config"
+		'-g, --generate-config'
 	)}      Generate a config file based on project structure
-  ${green("-v, --verbose")}              Show verbose output
-  ${green("-h, --help")}                 Show this help message
+  ${green('-v, --verbose')}              Show verbose output
+  ${green('-h, --help')}                 Show this help message
 
-${bold("Examples:")}
+${bold('Examples:')}
   # Generate a config file for your project
-  ${yellow("repo-to-xml ./my-repo --generate-config")}
+  ${yellow('repo-to-xml ./my-repo --generate-config')}
 
   # List available extensions in the project
-  ${yellow("repo-to-xml ./my-repo --list-extensions")}
+  ${yellow('repo-to-xml ./my-repo --list-extensions')}
 
   # Use the generated config
-  ${yellow("repo-to-xml ./my-repo --config my-repo.config.json")}
+  ${yellow('repo-to-xml ./my-repo --config my-repo.config.json')}
 
   # Or specify extensions directly
-  ${yellow("repo-to-xml ./my-repo --include ts,svelte,js")}
+  ${yellow('repo-to-xml ./my-repo --include ts,svelte,js')}
 
-${bold("Note:")}
+${bold('Note:')}
   - Config files are git-ignored by default (except example.config.json)
   - Output XML files are named after the project by default
   - Each project can have its own config file (<project-name>.config.json)
@@ -120,32 +122,37 @@ ${bold("Note:")}
 
 function get_project_name(path: string): string {
 	// Remove trailing slash if present
-	const cleaned_path = path.replace(/\/$/, "");
+	const cleaned_path = path.replace(/\/$/, '');
 	// Get the last part of the path
-	return cleaned_path.split("/").pop() || "repo";
+	return cleaned_path.split('/').pop() || 'repo';
 }
 
 function prompt_yes_no(message: string): boolean {
 	const response = prompt(`${message} (Y/n)`);
 	// Return true if response is empty (user just hit enter) or starts with 'y'
-	return !response || response.toLowerCase().startsWith("y");
+	return !response || response.toLowerCase().startsWith('y');
 }
 
 async function main() {
 	const flags = parseArgs(Deno.args, {
-		string: ["output", "config", "include"],
-		boolean: ["help", "verbose", "list-extensions", "generate-config"],
+		string: ['output', 'config', 'include'],
+		boolean: [
+			'help',
+			'verbose',
+			'list-extensions',
+			'generate-config',
+		],
 		alias: {
-			o: "output",
-			c: "config",
-			i: "include",
-			l: "list-extensions",
-			g: "generate-config",
-			h: "help",
-			v: "verbose",
+			o: 'output',
+			c: 'config',
+			i: 'include',
+			l: 'list-extensions',
+			g: 'generate-config',
+			h: 'help',
+			v: 'verbose',
 		},
 		default: {
-			output: "repo.xml",
+			output: 'repo.xml',
 			verbose: false,
 		},
 	});
@@ -164,19 +171,19 @@ async function main() {
 	print_step(`Processing ${bold(project_name)}`);
 
 	// Update default output name to use project name
-	if (!flags.output || flags.output === "repo.xml") {
+	if (!flags.output || flags.output === 'repo.xml') {
 		flags.output = `${project_name}.xml`;
 	}
 
 	await validatePath(repoPath);
 
 	// Handle special commands first
-	if (flags["generate-config"]) {
+	if (flags['generate-config']) {
 		await generate_config(repoPath, `${project_name}.config.json`);
 		Deno.exit(0);
 	}
 
-	if (flags["list-extensions"]) {
+	if (flags['list-extensions']) {
 		const extensions = await scan_project_extensions(repoPath);
 		console.log(format_extensions(extensions));
 		Deno.exit(0);
@@ -187,19 +194,19 @@ async function main() {
 
 	// Check if neither config nor include flags are provided
 	if (!flags.config && !flags.include) {
-		print_warning("No configuration provided.");
+		print_warning('No configuration provided.');
 
 		const should_generate = prompt_yes_no(
-			"Would you like to generate a config file for this project?"
+			'Would you like to generate a config file for this project?'
 		);
 
 		if (should_generate) {
 			const config_path = `${project_name}.config.json`;
 			await generate_config(repoPath, config_path);
 
-			print_success("\nConfig file generated!");
+			print_success('\nConfig file generated!');
 			console.log(`
-${bold("Next steps:")}
+${bold('Next steps:')}
 1. Review the generated config: ${green(config_path)}
 2. Run the converter with your config:
    ${yellow(`deno task start ${repoPath} --config ${config_path}`)}
@@ -209,7 +216,9 @@ ${yellow(`deno task start ${repoPath} --list-extensions`)}
 `);
 			Deno.exit(0);
 		} else {
-			print_warning("\nYou can specify extensions directly using --include");
+			print_warning(
+				'\nYou can specify extensions directly using --include'
+			);
 			console.log(
 				`Example: ${yellow(
 					`deno task start ${repoPath} --include ts,svelte,js`
@@ -224,7 +233,9 @@ ${yellow(`deno task start ${repoPath} --list-extensions`)}
 		const customConfig = await loadConfig(flags.config);
 		config = { ...config, ...customConfig };
 	} else if (flags.include) {
-		const extensions = flags.include.split(",").map((ext) => ext.trim());
+		const extensions = flags.include
+			.split(',')
+			.map((ext) => ext.trim());
 		config = {
 			...config,
 			includeFiles: extensions.map((ext) => `*.${ext}`),
@@ -236,7 +247,7 @@ ${yellow(`deno task start ${repoPath} --list-extensions`)}
 		const startTime = new Date();
 
 		if (flags.verbose) {
-			print_step("Configuration:");
+			print_step('Configuration:');
 			console.log(config);
 		}
 
@@ -249,18 +260,20 @@ ${yellow(`deno task start ${repoPath} --list-extensions`)}
 		const endTime = new Date();
 		const duration = (endTime.getTime() - startTime.getTime()) / 1000;
 
-		print_success("\nProcessing complete!");
+		print_success('\nProcessing complete!');
 		console.log(`
-${bold("Summary:")}
+${bold('Summary:')}
   Files processed: ${green(result.stats.totalFiles.toString())}
   Files skipped:  ${yellow(result.stats.skippedFiles.toString())}
-  Total size:     ${(result.stats.totalSize / 1024 / 1024).toFixed(2)} MB
+  Total size:     ${(result.stats.totalSize / 1024 / 1024).toFixed(
+		2
+	)} MB
   Duration:       ${duration.toFixed(2)} seconds
 
-${bold("Output:")} ${green(flags.output)}
+${bold('Output:')} ${green(flags.output)}
 `);
 	} catch (error: unknown) {
-		print_error("\nError processing repository:");
+		print_error('\nError processing repository:');
 		if (error instanceof Error) {
 			print_error(error.message);
 		} else {

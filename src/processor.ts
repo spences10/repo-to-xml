@@ -1,13 +1,13 @@
-import { join, relative } from "@std/path";
+import { join, relative } from '@std/path';
 import {
 	FileEntry,
 	ProcessingResult,
 	ProcessingStats,
 	RepoConfig,
-} from "./types/mod.ts";
-import { compress_content } from "./utils/compression.ts";
-import { getFileType, walkFiles } from "./utils/file.ts";
-import { formatXml, resultsToXml } from "./utils/xml.ts";
+} from './types/mod.ts';
+import { compress_content } from './utils/compression.ts';
+import { getFileType, walkFiles } from './utils/file.ts';
+import { formatXml, resultsToXml } from './utils/xml.ts';
 
 export class RepoProcessor {
 	private config: RepoConfig;
@@ -105,7 +105,10 @@ export class RepoProcessor {
 
 			// Add git info if enabled
 			if (this.config.includeGitInfo) {
-				entry.gitInfo = await this.getFileGitInfo(repoPath, relativePath);
+				entry.gitInfo = await this.getFileGitInfo(
+					repoPath,
+					relativePath
+				);
 			}
 
 			return entry;
@@ -120,8 +123,8 @@ export class RepoProcessor {
 	 */
 	private async getGitInfo(repoPath: string) {
 		try {
-			const gitDir = join(repoPath, ".git");
-			const gitConfigPath = join(gitDir, "config");
+			const gitDir = join(repoPath, '.git');
+			const gitConfigPath = join(gitDir, 'config');
 
 			// Check if git repository exists
 			try {
@@ -135,10 +138,12 @@ export class RepoProcessor {
 
 			// Extract remote URL
 			const remoteMatch = configContent.match(/url = (.+)/);
-			const remoteUrl = remoteMatch ? remoteMatch[1].trim() : undefined;
+			const remoteUrl = remoteMatch
+				? remoteMatch[1].trim()
+				: undefined;
 
 			// Get current branch
-			const headPath = join(gitDir, "HEAD");
+			const headPath = join(gitDir, 'HEAD');
 			const headContent = await Deno.readTextFile(headPath);
 			const branchMatch = headContent.match(/ref: refs\/heads\/(.+)/);
 			const branch = branchMatch ? branchMatch[1].trim() : undefined;
@@ -146,7 +151,7 @@ export class RepoProcessor {
 			// Get last commit hash
 			let lastCommit: string | undefined;
 			if (branch) {
-				const refPath = join(gitDir, "refs", "heads", branch);
+				const refPath = join(gitDir, 'refs', 'heads', branch);
 				try {
 					lastCommit = (await Deno.readTextFile(refPath)).trim();
 				} catch {
@@ -160,7 +165,7 @@ export class RepoProcessor {
 				lastCommit,
 			};
 		} catch (error) {
-			console.error("Error getting git info:", error);
+			console.error('Error getting git info:', error);
 			return undefined;
 		}
 	}
@@ -170,17 +175,17 @@ export class RepoProcessor {
 	 */
 	private async getFileGitInfo(repoPath: string, filePath: string) {
 		try {
-			const gitDir = join(repoPath, ".git");
+			const gitDir = join(repoPath, '.git');
 
 			// Run git log command
-			const command = new Deno.Command("git", {
+			const command = new Deno.Command('git', {
 				args: [
-					"-C",
+					'-C',
 					repoPath,
-					"log",
-					"-1",
-					"--format=%H%n%s%n%an%n%aI",
-					"--",
+					'log',
+					'-1',
+					'--format=%H%n%s%n%an%n%aI',
+					'--',
 					filePath,
 				],
 			});
@@ -193,7 +198,7 @@ export class RepoProcessor {
 			const [hash, message, author, date] = new TextDecoder()
 				.decode(output.stdout)
 				.trim()
-				.split("\n");
+				.split('\n');
 
 			return {
 				lastCommit: hash,

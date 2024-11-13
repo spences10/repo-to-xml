@@ -1,73 +1,73 @@
-import { join } from "@std/path";
-import { RepoConfig } from "../types/mod.ts";
+import { join } from '@std/path';
+import { RepoConfig } from '../types/mod.ts';
 
 /**
  * Map of file extensions to their types
  */
 const FILE_TYPE_MAP: Record<string, string> = {
 	// Programming Languages
-	ts: "typescript",
-	tsx: "typescript",
-	js: "javascript",
-	jsx: "javascript",
-	py: "python",
-	rb: "ruby",
-	php: "php",
-	java: "java",
-	kt: "kotlin",
-	go: "go",
-	rs: "rust",
-	c: "c",
-	cpp: "cpp",
-	cs: "csharp",
-	swift: "swift",
-	scala: "scala",
+	ts: 'typescript',
+	tsx: 'typescript',
+	js: 'javascript',
+	jsx: 'javascript',
+	py: 'python',
+	rb: 'ruby',
+	php: 'php',
+	java: 'java',
+	kt: 'kotlin',
+	go: 'go',
+	rs: 'rust',
+	c: 'c',
+	cpp: 'cpp',
+	cs: 'csharp',
+	swift: 'swift',
+	scala: 'scala',
 
 	// Web
-	html: "html",
-	htm: "html",
-	css: "css",
-	scss: "scss",
-	sass: "sass",
-	less: "less",
-	json: "json",
-	xml: "xml",
-	svg: "svg",
+	html: 'html',
+	htm: 'html',
+	css: 'css',
+	scss: 'scss',
+	sass: 'sass',
+	less: 'less',
+	json: 'json',
+	xml: 'xml',
+	svg: 'svg',
 
 	// Documentation
-	md: "markdown",
-	mdx: "markdown",
-	txt: "text",
-	rst: "restructuredtext",
-	pdf: "pdf",
-	doc: "word",
-	docx: "word",
+	md: 'markdown',
+	mdx: 'markdown',
+	txt: 'text',
+	rst: 'restructuredtext',
+	pdf: 'pdf',
+	doc: 'word',
+	docx: 'word',
 
 	// Configuration
-	yml: "yaml",
-	yaml: "yaml",
-	toml: "toml",
-	ini: "ini",
-	env: "env",
+	yml: 'yaml',
+	yaml: 'yaml',
+	toml: 'toml',
+	ini: 'ini',
+	env: 'env',
 
 	// Shell
-	sh: "shell",
-	bash: "shell",
-	zsh: "shell",
-	fish: "shell",
+	sh: 'shell',
+	bash: 'shell',
+	zsh: 'shell',
+	fish: 'shell',
 
 	// Data
-	csv: "csv",
-	tsv: "tsv",
-	sql: "sql",
-	db: "database",
-	sqlite: "database",
+	csv: 'csv',
+	tsv: 'tsv',
+	sql: 'sql',
+	db: 'database',
+	sqlite: 'database',
 
 	// Other
-	lock: "lock",
-	log: "log",
-	conf: "config",
-	cfg: "config",
+	lock: 'lock',
+	log: 'log',
+	conf: 'config',
+	cfg: 'config',
 };
 
 /**
@@ -75,64 +75,67 @@ const FILE_TYPE_MAP: Record<string, string> = {
  */
 const BINARY_EXTENSIONS = new Set([
 	// Images
-	"png",
-	"jpg",
-	"jpeg",
-	"gif",
-	"bmp",
-	"ico",
-	"webp",
-	"tiff",
+	'png',
+	'jpg',
+	'jpeg',
+	'gif',
+	'bmp',
+	'ico',
+	'webp',
+	'tiff',
 	// Audio
-	"mp3",
-	"wav",
-	"ogg",
-	"flac",
-	"m4a",
+	'mp3',
+	'wav',
+	'ogg',
+	'flac',
+	'm4a',
 	// Video
-	"mp4",
-	"webm",
-	"avi",
-	"mov",
-	"wmv",
+	'mp4',
+	'webm',
+	'avi',
+	'mov',
+	'wmv',
 	// Archives
-	"zip",
-	"tar",
-	"gz",
-	"7z",
-	"rar",
+	'zip',
+	'tar',
+	'gz',
+	'7z',
+	'rar',
 	// Fonts
-	"ttf",
-	"otf",
-	"woff",
-	"woff2",
-	"eot",
+	'ttf',
+	'otf',
+	'woff',
+	'woff2',
+	'eot',
 	// Documents
-	"pdf",
-	"doc",
-	"docx",
-	"xls",
-	"xlsx",
+	'pdf',
+	'doc',
+	'docx',
+	'xls',
+	'xlsx',
 	// Executables
-	"exe",
-	"dll",
-	"so",
-	"dylib",
+	'exe',
+	'dll',
+	'so',
+	'dylib',
 	// Other
-	"bin",
-	"dat",
-	"db",
-	"sqlite",
+	'bin',
+	'dat',
+	'db',
+	'sqlite',
 ]);
 
 /**
  * Check if a file path matches any of the exclude patterns
  */
-export function isExcluded(path: string, patterns: string[]): boolean {
+export function isExcluded(
+	path: string,
+	patterns: string[]
+): boolean {
 	return patterns.some((pattern) => {
-		if (pattern.includes("*")) {
+		if (pattern.includes('*')) {
 			const regex = new RegExp(
-				"^" + pattern.replace(/\./g, "\\.").replace(/\*/g, ".*") + "$"
+				'^' + pattern.replace(/\./g, '\\.').replace(/\*/g, '.*') + '$'
 			);
 			return regex.test(path);
 		}
@@ -162,7 +165,7 @@ export async function isBinaryFile(
 	path: string,
 	content?: Uint8Array
 ): Promise<boolean> {
-	const ext = path.split(".").pop()?.toLowerCase() || "";
+	const ext = path.split('.').pop()?.toLowerCase() || '';
 
 	// Check extension first
 	if (BINARY_EXTENSIONS.has(ext)) {
@@ -196,31 +199,31 @@ export async function isBinaryFile(
  */
 export function getFileType(path: string): string {
 	// Check for specific files first
-	const basename = path.split("/").pop()?.toLowerCase() || "";
+	const basename = path.split('/').pop()?.toLowerCase() || '';
 	switch (basename) {
-		case "dockerfile":
-			return "dockerfile";
-		case "makefile":
-			return "makefile";
-		case ".gitignore":
-			return "gitignore";
-		case ".env":
-			return "env";
-		case "license":
-		case "licence":
-			return "license";
+		case 'dockerfile':
+			return 'dockerfile';
+		case 'makefile':
+			return 'makefile';
+		case '.gitignore':
+			return 'gitignore';
+		case '.env':
+			return 'env';
+		case 'license':
+		case 'licence':
+			return 'license';
 	}
 
 	// Check extension
-	const ext = path.split(".").pop()?.toLowerCase() || "";
-	return FILE_TYPE_MAP[ext] || "unknown";
+	const ext = path.split('.').pop()?.toLowerCase() || '';
+	return FILE_TYPE_MAP[ext] || 'unknown';
 }
 
 /**
  * Format file size in bytes to human readable string
  */
 export function formatFileSize(bytes: number): string {
-	const units = ["B", "KB", "MB", "GB", "TB"];
+	const units = ['B', 'KB', 'MB', 'GB', 'TB'];
 	let size = bytes;
 	let unitIndex = 0;
 
@@ -239,9 +242,9 @@ export const should_include_file = (
 	path: string,
 	patterns: string[]
 ): boolean => {
-	const ext = path.split(".").pop()?.toLowerCase() || "";
+	const ext = path.split('.').pop()?.toLowerCase() || '';
 	return patterns.some((pattern) => {
-		const patternExt = pattern.replace("*.", "");
+		const patternExt = pattern.replace('*.', '');
 		return ext === patternExt;
 	});
 };
@@ -258,7 +261,10 @@ export async function shouldProcessFile(
 	// Check size
 	try {
 		const stat = await Deno.stat(path);
-		return stat.size >= config.minFileSize && stat.size <= config.maxFileSize;
+		return (
+			stat.size >= config.minFileSize &&
+			stat.size <= config.maxFileSize
+		);
 	} catch {
 		return false;
 	}
@@ -301,14 +307,18 @@ export async function scan_project_extensions(
 			if (entry.isDirectory) {
 				// Skip common exclude dirs
 				if (
-					!["node_modules", ".git", "dist", "build", ".svelte-kit"].includes(
-						entry.name
-					)
+					![
+						'node_modules',
+						'.git',
+						'dist',
+						'build',
+						'.svelte-kit',
+					].includes(entry.name)
 				) {
 					await scan(fullPath);
 				}
 			} else if (entry.isFile) {
-				const ext = entry.name.split(".").pop()?.toLowerCase();
+				const ext = entry.name.split('.').pop()?.toLowerCase();
 				if (ext) extensions.add(ext);
 			}
 		}
@@ -324,23 +334,23 @@ export async function scan_project_extensions(
 export function format_extensions(extensions: Set<string>): string {
 	const groups: Record<string, string[]> = {
 		Programming: [
-			"ts",
-			"js",
-			"py",
-			"java",
-			"cpp",
-			"rs",
-			"go",
-			"rb",
-			"php",
-			"svelte",
-			"vue",
-			"jsx",
-			"tsx",
+			'ts',
+			'js',
+			'py',
+			'java',
+			'cpp',
+			'rs',
+			'go',
+			'rb',
+			'php',
+			'svelte',
+			'vue',
+			'jsx',
+			'tsx',
 		],
-		Web: ["html", "css", "scss", "less", "json", "xml"],
-		Documentation: ["md", "txt", "rst", "doc", "pdf"],
-		Config: ["yml", "yaml", "toml", "ini", "env"],
+		Web: ['html', 'css', 'scss', 'less', 'json', 'xml'],
+		Documentation: ['md', 'txt', 'rst', 'doc', 'pdf'],
+		Config: ['yml', 'yaml', 'toml', 'ini', 'env'],
 		Other: [],
 	};
 
@@ -361,18 +371,18 @@ export function format_extensions(extensions: Set<string>): string {
 	// Add remaining extensions to Other
 	for (const ext of extensions) {
 		if (!found.has(ext)) {
-			grouped["Other"].push(ext);
+			grouped['Other'].push(ext);
 		}
 	}
 
 	// Format output
-	const lines: string[] = ["Available file extensions:"];
+	const lines: string[] = ['Available file extensions:'];
 	for (const [group, exts] of Object.entries(grouped)) {
 		if (exts.length > 0) {
 			lines.push(`\n${group}:`);
-			lines.push(`  ${exts.sort().join(", ")}`);
+			lines.push(`  ${exts.sort().join(', ')}`);
 		}
 	}
 
-	return lines.join("\n");
+	return lines.join('\n');
 }
