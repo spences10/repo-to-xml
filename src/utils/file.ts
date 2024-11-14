@@ -1,4 +1,4 @@
-import { join } from '@std/path';
+import { globToRegExp, join } from '@std/path';
 import { RepoConfig } from '../types/mod.ts';
 
 /**
@@ -275,19 +275,34 @@ export async function shouldProcessFile(
  */
 export async function* walkFiles(
 	dir: string,
-	config: RepoConfig
+	config: RepoConfig,
+	baseDir: string = dir
 ): AsyncGenerator<string> {
 	for await (const entry of Deno.readDir(dir)) {
-		const path = join(dir, entry.name);
+		const path = `${dir}/${entry.name}`;
+		const relativePath = path.replace(baseDir + '/', '');
 
 		if (entry.isDirectory) {
-			if (!isExcluded(entry.name, config.excludeDirs)) {
-				yield* walkFiles(path, config);
-			}
+			if (config.excludeDirs.includes(entry.name)) continue;
+			yield* walkFiles(path, config, baseDir);
 		} else if (entry.isFile) {
-			if (await shouldProcessFile(path, config)) {
-				yield path;
+			// Skip excluded files using relative path
+			if (is_excluded(relativePath, config)) continue;
+
+			// Check if file should be included
+			if (!should_include_file(relativePath, config.includeFiles))
+				continue;
+
+			// Check file size
+			const stat = await Deno.stat(path);
+			if (
+				stat.size < config.minFileSize ||
+				stat.size > config.maxFileSize
+			) {
+				continue;
 			}
+
+			yield path;
 		}
 	}
 }
@@ -386,3 +401,16 @@ export function format_extensions(extensions: Set<string>): string {
 
 	return lines.join('\n');
 }
+
+export const is_excluded = (
+	path: string,
+	config: RepoConfig
+): boolean => {
+	// Convert glob patterns to RegExp
+	const exclude_patterns = config.excludeFiles.map((pattern) =>
+		globToRegExp(pattern, { globstar: true })
+	);
+
+	// Check if path matches any exclude pattern
+	return exclude_patterns.some((pattern) => pattern.test(path));
+};

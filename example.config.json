@@ -14,7 +14,6 @@
   ],
   "maxFileSize": 524288,
   "minFileSize": 0,
-  "includeGitInfo": false,
   "compressContent": true,
   "compressionThreshold": 1024
 }

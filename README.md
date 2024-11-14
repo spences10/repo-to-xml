@@ -52,20 +52,19 @@ Example config file (`my-repo.config.json`):
 
 ```json
 {
-  "excludeDirs": [
-    ".git",
-    "node_modules",
-    ".svelte-kit",
-    "build",
-    "dist",
-    "coverage"
-  ],
-  "includeFiles": ["*.svelte", "*.ts", "*.js"],
-  "maxFileSize": 524288,
-  "minFileSize": 0,
-  "includeGitInfo": false,
-  "compressContent": true,
-  "compressionThreshold": 1024
+	"excludeDirs": [
+		".git",
+		"node_modules",
+		".svelte-kit",
+		"build",
+		"dist",
+		"coverage"
+	],
+	"includeFiles": ["*.svelte", "*.ts", "*.js"],
+	"maxFileSize": 524288,
+	"minFileSize": 0,
+	"compressContent": true,
+	"compressionThreshold": 1024
 }
 ```
 

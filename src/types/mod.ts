@@ -1,7 +1,7 @@
 export interface RepoConfig {
 	/** Directories to exclude from processing */
 	excludeDirs: string[];
-	/** Files to exclude from processing */
+	/** Files to exclude from processing (supports glob patterns) */
 	excludeFiles: string[];
 	/** File patterns to include (supports glob patterns) */
 	includeFiles: string[];
@@ -9,8 +9,6 @@ export interface RepoConfig {
 	maxFileSize: number;
 	/** Minimum file size in bytes */
 	minFileSize: number;
-	/** Whether to include git metadata */
-	includeGitInfo: boolean;
 	/** Whether to compress file contents */
 	compressContent: boolean;
 	/** Maximum content length before compression (bytes) */
@@ -59,8 +57,8 @@ export interface CliOptions {
 	output: string;
 	/** Configuration file path */
 	config?: string;
-	/** File extensions to include */
-	extensions?: string[];
+	/** File extensions to include (comma-separated) */
+	include?: string;
 	/** Show available extensions */
 	listExtensions?: boolean;
 	/** Verbosity level */
@@ -89,11 +87,27 @@ export const DEFAULT_CONFIG: RepoConfig = {
 		'.env',
 		'.env.*',
 		'*.log',
+		'vite.config.js.timestamp-*',
+		'vite.config.ts.timestamp-*',
+		'*.map',
+		'*.min.js',
+		'*.min.css',
+		'LICENSE',
+		'LICENSE.*',
+		'*.md',
+		'*.lock',
 	],
-	includeFiles: ['*.ts', '*.svelte'],
+	includeFiles: [
+		'*.ts',
+		'*.svelte',
+		'*.js',
+		'*.jsx',
+		'*.tsx',
+		'*.css',
+		'*.html',
+	],
 	maxFileSize: 512 * 1024, // 512KB
 	minFileSize: 0,
-	includeGitInfo: false,
 	compressContent: true,
 	compressionThreshold: 1024, // Compress files larger than 1KB
 };

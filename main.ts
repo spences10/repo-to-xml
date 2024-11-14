@@ -100,6 +100,15 @@ ${bold('Options:')}
   ${green('-v, --verbose')}              Show verbose output
   ${green('-h, --help')}                 Show this help message
 
+${bold('Config file options:')}
+  - excludeDirs: Directories to skip
+  - excludeFiles: File patterns to exclude (glob patterns supported)
+  - includeFiles: File patterns to include (glob patterns supported)
+  - maxFileSize: Maximum file size in bytes
+  - minFileSize: Minimum file size in bytes
+  - compressContent: Whether to compress large file contents
+  - compressionThreshold: Size threshold for compression
+
 ${bold('Examples:')}
   # Generate a config file for your project
   ${yellow('repo-to-xml ./my-repo --generate-config')}
@@ -112,11 +121,6 @@ ${bold('Examples:')}
 
   # Or specify extensions directly
   ${yellow('repo-to-xml ./my-repo --include ts,svelte,js')}
-
-${bold('Note:')}
-  - Config files are git-ignored by default (except example.config.json)
-  - Output XML files are named after the project by default
-  - Each project can have its own config file (<project-name>.config.json)
 `);
 }
 
